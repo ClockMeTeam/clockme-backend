@@ -13,11 +13,11 @@ func Load() *ApiConfig {
 	clockifySecret := os.Getenv("CLOCKIFY_API_KEY")
 	MaevlavaId := os.Getenv("MAEVLAVA_ID")
 	DeandraId := os.Getenv("DEANDRA_ID")
-	ProjectId := os.Getenv("PROJECT_ID")
+	WorkspaceId := os.Getenv("WORKSPACE_ID")
 	return &ApiConfig{
 		ClockifySecret: clockifySecret,
 		MaevlavaId:     MaevlavaId,
 		DeandraId:      DeandraId,
-		WorkspaceId:    ProjectId,
+		WorkspaceId:    WorkspaceId,
 	}
 }

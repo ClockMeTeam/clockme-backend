@@ -16,18 +16,11 @@ func NewWorkDebtHandler(service workdebt.WorkDebtService) *WorkDebtHandler {
 }
 
 func (h *WorkDebtHandler) GetAllUserWorkDebt(w http.ResponseWriter, r *http.Request) {
-	type Response struct {
-		Debts string `json:"debts"`
-	}
-
-	debts, err := h.service.GetAllUserWorkDebt()
+	workDebtResponse, err := h.service.GetAllUserWorkDebt()
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 
-	response := Response{
-		Debts: debts,
-	}
-
-	RespondWithJSON(w, http.StatusOK, response)
+	RespondWithJSON(w, http.StatusOK, workDebtResponse)
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/joho/godotenv"
 	"github.com/maevlava/ftf-clockify/internal/app"
 	"github.com/maevlava/ftf-clockify/internal/config"
@@ -12,7 +11,7 @@ import (
 )
 
 const (
-	port    = "8080"
+	port    = "3100"
 	address = ":" + port
 )
 
@@ -37,6 +36,6 @@ func main() {
 		Handler: router,
 	}
 
-	fmt.Println("Starting server on port ", port)
+	log.Printf("Starting server on port %s", port)
 	log.Fatal(server.ListenAndServe())
 }
