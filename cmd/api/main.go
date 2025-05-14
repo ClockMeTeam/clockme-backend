@@ -6,6 +6,7 @@ import (
 	"github.com/maevlava/ftf-clockify/internal/app"
 	"github.com/maevlava/ftf-clockify/internal/config"
 	httpdelivery "github.com/maevlava/ftf-clockify/internal/delivery/http"
+	"github.com/maevlava/ftf-clockify/internal/service/workdebt"
 	"log"
 	"net/http"
 )
@@ -22,9 +23,15 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 	cfg := config.Load()
-	app := app.NewApp(cfg)
+	appInstance := app.NewApp(cfg)
 
-	router := httpdelivery.NewRouter(app)
+	// Services
+	workDebtService := workdebt.NewService(cfg)
+
+	// Handlers
+	workDebtHandler := httpdelivery.NewWorkDebtHandler(workDebtService)
+
+	router := httpdelivery.NewRouter(appInstance, workDebtHandler)
 	server := &http.Server{
 		Addr:    address,
 		Handler: router,
