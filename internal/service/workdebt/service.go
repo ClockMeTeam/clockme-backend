@@ -84,11 +84,14 @@ func calculateGrossWorkingHoursOwed() (time.Duration, error) {
 		dayOfWeek := currentDate.Weekday()
 
 		if slices.Contains(HOLIDAYS, dayOfWeek.String()) {
+			log.Printf("Skipping holiday %s\n", dayOfWeek.String())
 			currentDate = currentDate.AddDate(0, 0, 1)
 			continue
 		}
+		log.Printf("Processing day %s %s\n", dayOfWeek.String(), currentDate.String())
 
 		grossWorkHoursOwed += baseWorkingHours
+		log.Printf("Work Hours Owed %s", grossWorkHoursOwed.String())
 		currentDate = currentDate.AddDate(0, 0, 1)
 	}
 	return grossWorkHoursOwed, nil
@@ -125,7 +128,6 @@ func calculateTotalActualWorkingHours(workspaceId, userId, apiKey string) (time.
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return 0, errors.New("failed to decode response")
 	}
-	log.Printf("%v\n", response)
 
 	var totalDuration time.Duration
 	for _, entry := range response {
