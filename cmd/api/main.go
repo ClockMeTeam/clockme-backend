@@ -1,10 +1,15 @@
 package main
 
 import (
+	"fmt"
+	"github.com/maevlava/ftf-clockify/internal/repository"
+
+	//"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/maevlava/ftf-clockify/internal/app"
 	"github.com/maevlava/ftf-clockify/internal/config"
 	httpdelivery "github.com/maevlava/ftf-clockify/internal/delivery/http"
+	"github.com/maevlava/ftf-clockify/internal/repository/postgres"
 	"github.com/maevlava/ftf-clockify/internal/service/workdebt"
 	"log"
 	"net/http"
@@ -18,8 +23,18 @@ func main() {
 	cfg := config.Load()
 	appInstance := app.NewApp(cfg)
 
+	// database
+	dbPool, err := postgres.NewConnectionPool(cfg.Database)
+	if err != nil {
+		log.Fatal(fmt.Sprintf("Error connecting to database: %s", err))
+	}
+	defer dbPool.Close()
+
+	// repositories
+	userRepo := repository.NewPgUserRepository(dbPool)
+
 	// Services
-	workDebtService := workdebt.NewService(cfg)
+	workDebtService := workdebt.NewService(&cfg.API, userRepo)
 
 	// Handlers
 	workDebtHandler := httpdelivery.NewWorkDebtHandler(workDebtService)

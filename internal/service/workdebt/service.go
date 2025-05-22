@@ -1,10 +1,12 @@
 package workdebt
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/maevlava/ftf-clockify/internal/config"
+	"github.com/maevlava/ftf-clockify/internal/domain"
 	"log"
 	"net/http"
 	"slices"
@@ -35,33 +37,51 @@ type WorkDebtService interface {
 }
 
 type workDebtService struct {
-	config *config.ApiConfig
+	config   *config.ApiConfig
+	userRepo domain.UserRepository
+	//	projectRepo domain.ProjectRepository
 }
 
-func NewService(cfg *config.ApiConfig) WorkDebtService {
+func NewService(cfg *config.ApiConfig, userRepo domain.UserRepository) WorkDebtService {
 	return &workDebtService{
-		config: cfg,
+		config:   cfg,
+		userRepo: userRepo,
 	}
 }
 
+// TODO refactor to database
 func (w workDebtService) GetAllUserWorkDebt() (WorkDebtResponse, error) {
-	owed, _ := calculateGrossWorkingHoursOwed()
-	actualMaevlavaWorkingHours, _ := calculateTotalActualWorkingHours(w.config.WorkspaceId, w.config.MaevlavaId, w.config.ClockifySecret)
-	actualDeandraWorkingHours, _ := calculateTotalActualWorkingHours(w.config.WorkspaceId, w.config.DeandraId, w.config.ClockifySecret)
-
-	totalMaevlavaDebt := owed - actualMaevlavaWorkingHours
-	totalDeandraDebt := owed - actualDeandraWorkingHours
-
-	return WorkDebtResponse{
-		Maevlava: totalMaevlavaDebt.String(),
-		Deandra:  totalDeandraDebt.String(),
-	}, nil
+	users, err := w.userRepo.GetUsers(context.TODO())
+	if err != nil {
+		return WorkDebtResponse{}, err
+	}
+	for _, user := range users {
+		log.Printf("User: %s\n", user.Name)
+	}
+	//owed, _ := calculateGrossWorkingHoursOwed()
+	//actualMaevlavaWorkingHours, err := calculateTotalActualWorkingHours(w.config.WorkspaceId, w.config.MaevlavaId, w.config.ClockifySecret)
+	//if err != nil {
+	//	log.Printf(err.Error())
+	//}
+	//actualDeandraWorkingHours, err := calculateTotalActualWorkingHours(w.config.WorkspaceId, w.config.DeandraId, w.config.ClockifySecret)
+	//if err != nil {
+	//	log.Printf(err.Error())
+	//}
+	//
+	//totalMaevlavaDebt := owed - actualMaevlavaWorkingHours
+	//totalDeandraDebt := owed - actualDeandraWorkingHours
+	//
+	//return WorkDebtResponse{
+	//	Maevlava: totalMaevlavaDebt.String(),
+	//	Deandra:  totalDeandraDebt.String(),
+	//}, nil
+	return WorkDebtResponse{}, nil
 }
-
 func (w workDebtService) GetWorkDebtByProject(projectId string) (string, error) {
 	//TODO implement me
 	panic("implement me")
 }
+
 func calculateGrossWorkingHoursOwed() (time.Duration, error) {
 	var grossWorkHoursOwed time.Duration
 
@@ -97,6 +117,7 @@ func calculateGrossWorkingHoursOwed() (time.Duration, error) {
 	return grossWorkHoursOwed, nil
 }
 func calculateTotalActualWorkingHours(workspaceId, userId, apiKey string) (time.Duration, error) {
+	log.Printf("CALCULATE TOTAL WORKING HOURS\nWORKSPACE: %s\nUSER: %s\nAPI_KEY: %s\n", workspaceId, userId, apiKey)
 	type TimeInterval struct {
 		Start string  `json:"start"`
 		End   *string `json:"end"`
@@ -111,15 +132,18 @@ func calculateTotalActualWorkingHours(workspaceId, userId, apiKey string) (time.
 		fmt.Sprintf("https://api.clockify.me/api/v1/workspaces/%s/user/%s/time-entries", workspaceId, userId),
 		nil,
 	)
+	if err != nil {
+		return 0, errors.New("failed to create request")
+	}
 	req.Header.Add("X-Api-Key", apiKey)
 
+	// test ca certificate please
 	resp, err := client.Do(req)
 	if err != nil {
-		return 0, errors.New("failed to get Maevlava work debt")
+		return 0, errors.New(fmt.Sprintf("failed to get work debt from server\nerror: %v", err))
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("Response status: %s\n", resp.Status)
 		return 0, errors.New("failed to get Maevlava work debt")
 	}
 
