@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/joho/godotenv"
 	"github.com/maevlava/ftf-clockify/internal/app"
 	"github.com/maevlava/ftf-clockify/internal/config"
@@ -9,21 +8,13 @@ import (
 	"github.com/maevlava/ftf-clockify/internal/service/workdebt"
 	"log"
 	"net/http"
-	"os/exec"
-	"runtime"
-)
-
-const (
-	port    = "3100"
-	address = ":" + port
+	"os"
 )
 
 func main() {
-	// load env
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	loadEnv()
+
+	// app
 	cfg := config.Load()
 	appInstance := app.NewApp(cfg)
 
@@ -33,6 +24,8 @@ func main() {
 	// Handlers
 	workDebtHandler := httpdelivery.NewWorkDebtHandler(workDebtService)
 
+	port := os.Getenv("APP_INTERNAL_PORT")
+	address := ":" + port
 	router := httpdelivery.NewRouter(appInstance, workDebtHandler)
 	server := &http.Server{
 		Addr:    address,
@@ -40,19 +33,18 @@ func main() {
 	}
 
 	log.Printf("Starting server on port %s", port)
-	go openBrowser(fmt.Sprintf("http://localhost%s/api/v1/debts", address))
 	log.Fatal(server.ListenAndServe())
 }
-func openBrowser(url string) error {
-	switch runtime.GOOS {
-	case "linux":
-		err := exec.Command("xdg-open", url).Start()
-		if err != nil {
-			return err
-		}
-	case "windows":
-		return exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
-	}
 
-	return nil
+func loadEnv() {
+	if _, err := os.Stat(".env"); err == nil {
+		errLoad := godotenv.Load()
+		if errLoad != nil {
+			log.Println("Warning: .env file found but could not be loaded:", errLoad)
+		} else {
+			log.Println("Loaded environment variables from .env file")
+		}
+	} else {
+		log.Println("No .env file found, relying on OS environment variables.")
+	}
 }
