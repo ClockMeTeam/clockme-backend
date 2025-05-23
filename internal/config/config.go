@@ -43,9 +43,9 @@ func loadAppConfig() AppConfig {
 func loadDatabaseConfig() DatabaseConfig {
 	dbHost := os.Getenv("DB_HOST")
 	dbPort := os.Getenv("DB_PORT")
-	dbName := os.Getenv("POSTGRES_DB")
-	dbUser := os.Getenv("POSTGRES_USER")
-	dbPassword := os.Getenv("POSTGRES_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
 	dbSSLMode := os.Getenv("DB_SSLMODE")
 
 	return DatabaseConfig{

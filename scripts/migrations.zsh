@@ -19,7 +19,7 @@ fi
 
 # const
 COMMAND=${1:-up}
-DB_CONNECTION="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${HOST_DB_PORT}/${POSTGRES_DB}?sslmode=disable"
+DB_CONNECTION="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSLMODE}"
 
 # Run goose
 goose -dir ./migrations postgres "${DB_CONNECTION}" "${@}"
