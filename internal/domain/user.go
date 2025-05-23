@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+// todo change from ID to clockify ID and create UUID for current ID
+// todo add start date
 type User struct {
 	ID        string        `json:"id"`
 	Name      string        `json:"name"`

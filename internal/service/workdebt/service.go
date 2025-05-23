@@ -26,13 +26,8 @@ const PROJECT_START = "2025-05-09"
 
 var HOLIDAYS = []string{"Tuesday", "Thursday"}
 
-type WorkDebtResponse struct {
-	Maevlava string `json:"maevlava"`
-	Deandra  string `json:"deandra"`
-}
-
 type WorkDebtService interface {
-	GetAllUserWorkDebt() (WorkDebtResponse, error)
+	GetUsersWorkDebt() ([]domain.User, error)
 	GetWorkDebtByProject(projectId string) (string, error)
 }
 
@@ -49,33 +44,26 @@ func NewService(cfg *config.ApiConfig, userRepo domain.UserRepository) WorkDebtS
 	}
 }
 
-// TODO refactor to database
-func (w workDebtService) GetAllUserWorkDebt() (WorkDebtResponse, error) {
+func (w workDebtService) GetUsersWorkDebt() ([]domain.User, error) {
 	users, err := w.userRepo.GetUsers(context.TODO())
 	if err != nil {
-		return WorkDebtResponse{}, err
+		return []domain.User{}, err
 	}
-	for _, user := range users {
-		log.Printf("User: %s\n", user.Name)
+
+	owe, err := calculateGrossWorkingHoursOwed()
+	if err != nil {
+		return []domain.User{}, err
 	}
-	//owed, _ := calculateGrossWorkingHoursOwed()
-	//actualMaevlavaWorkingHours, err := calculateTotalActualWorkingHours(w.config.WorkspaceId, w.config.MaevlavaId, w.config.ClockifySecret)
-	//if err != nil {
-	//	log.Printf(err.Error())
-	//}
-	//actualDeandraWorkingHours, err := calculateTotalActualWorkingHours(w.config.WorkspaceId, w.config.DeandraId, w.config.ClockifySecret)
-	//if err != nil {
-	//	log.Printf(err.Error())
-	//}
-	//
-	//totalMaevlavaDebt := owed - actualMaevlavaWorkingHours
-	//totalDeandraDebt := owed - actualDeandraWorkingHours
-	//
-	//return WorkDebtResponse{
-	//	Maevlava: totalMaevlavaDebt.String(),
-	//	Deandra:  totalDeandraDebt.String(),
-	//}, nil
-	return WorkDebtResponse{}, nil
+
+	for i, user := range users {
+		actual, err := calculateTotalActualWorkingHours(w.config.WorkspaceId, user.ID, w.config.ClockifySecret)
+		if err != nil {
+			return []domain.User{}, err
+		}
+		users[i].HoursOwed = owe - actual
+	}
+
+	return users, nil
 }
 func (w workDebtService) GetWorkDebtByProject(projectId string) (string, error) {
 	//TODO implement me
@@ -91,11 +79,11 @@ func calculateGrossWorkingHoursOwed() (time.Duration, error) {
 	todayString := time.Now().Format(dateLayout)
 	endDateLoop, err := time.ParseInLocation(dateLayout, todayString, time.UTC)
 	if err != nil {
-		return 0, err
+		return 0, errors.New("failed to parse today's date")
 	}
 	startDateLoop, err := time.ParseInLocation(dateLayout, PROJECT_START, time.UTC)
 	if err != nil {
-		return 0, err
+		return 0, errors.New("failed to parse today's date")
 	}
 
 	log.Printf("Iterating from %s to %s\n", startDateLoop, endDateLoop)
@@ -104,14 +92,11 @@ func calculateGrossWorkingHoursOwed() (time.Duration, error) {
 		dayOfWeek := currentDate.Weekday()
 
 		if slices.Contains(HOLIDAYS, dayOfWeek.String()) {
-			log.Printf("Skipping holiday %s\n", dayOfWeek.String())
 			currentDate = currentDate.AddDate(0, 0, 1)
 			continue
 		}
-		log.Printf("Processing day %s %s\n", dayOfWeek.String(), currentDate.String())
 
 		grossWorkHoursOwed += baseWorkingHours
-		log.Printf("Work Hours Owed %s", grossWorkHoursOwed.String())
 		currentDate = currentDate.AddDate(0, 0, 1)
 	}
 	return grossWorkHoursOwed, nil

@@ -73,7 +73,7 @@ func (q *Queries) GetUser(ctx context.Context, name string) (User, error) {
 	return i, err
 }
 
-const getUsers = `-- name: GetUsers :many
+const getUsers = `-- name: GetUsersWorkDebt :many
 SELECT id, name, email, created_at, update_at FROM users
 `
 

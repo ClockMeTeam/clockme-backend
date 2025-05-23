@@ -9,16 +9,16 @@ func NewRouter(app *app.Application, workDebtHandler *WorkDebtHandler) http.Hand
 	mux := http.NewServeMux()
 	apiMux := apiServerMux(workDebtHandler)
 
-	apiHandler := http.StripPrefix("/api/v1", apiMux)
+	apiHandler := http.StripPrefix("/api", apiMux)
 
-	mux.Handle("/api/v1/", apiHandler)
+	mux.Handle("/api/", apiHandler)
 	return mux
 }
 
 func apiServerMux(workDebtHandler *WorkDebtHandler) http.Handler {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /debts", workDebtHandler.GetAllUserWorkDebt)
+	mux.HandleFunc("GET /users/debts", workDebtHandler.GetUsersWorkDebt)
 
 	return mux
 }
