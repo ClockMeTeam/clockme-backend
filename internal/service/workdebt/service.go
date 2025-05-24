@@ -111,45 +111,61 @@ func calculateTotalActualWorkingHours(workspaceId, userId, apiKey string) (time.
 		TimeInterval TimeInterval `json:"timeInterval"`
 	}
 	client := &http.Client{}
-
-	req, err := http.NewRequest(
-		http.MethodGet,
-		fmt.Sprintf("https://api.clockify.me/api/v1/workspaces/%s/user/%s/time-entries", workspaceId, userId),
-		nil,
-	)
-	if err != nil {
-		return 0, errors.New("failed to create request")
-	}
-	req.Header.Add("X-Api-Key", apiKey)
-
-	// test ca certificate please
-	resp, err := client.Do(req)
-	if err != nil {
-		return 0, errors.New(fmt.Sprintf("failed to get work debt from server\nerror: %v", err))
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return 0, errors.New("failed to get Maevlava work debt")
-	}
-
-	var response []Response
-
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return 0, errors.New("failed to decode response")
-	}
-
+	page := 1
+	pageSize := 1000
 	var totalDuration time.Duration
-	for _, entry := range response {
 
-		if entry.TimeInterval.End == nil {
-			continue
-		}
-
-		duration, err := calculateTimeInterval(entry.TimeInterval.Start, *entry.TimeInterval.End)
+	for {
+		// request
+		url := fmt.Sprintf("https://api.clockify.me/api/v1/workspaces/%s/user/%s/time-entries?page=%d&page-size=%d", workspaceId, userId, page, pageSize)
+		req, err := http.NewRequest(
+			http.MethodGet,
+			url,
+			nil,
+		)
 		if err != nil {
-			return 0, errors.New("failed to calculate time interval")
+			return 0, errors.New("failed to create request")
 		}
-		totalDuration += duration
+
+		// Header with Clockify-key
+		req.Header.Add("X-Api-Key", apiKey)
+
+		// test ca certificate please
+		resp, err := client.Do(req)
+		if err != nil {
+			return 0, errors.New(fmt.Sprintf("failed to get work debt from server\nerror: %v", err))
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return 0, errors.New("failed to get Maevlava work debt")
+		}
+
+		var response []Response
+
+		if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+			return 0, errors.New("failed to decode response")
+		}
+
+		// break if response is 0 (nothing in page)
+		if len(response) == 0 {
+			break
+		}
+
+		for _, entry := range response {
+
+			if entry.TimeInterval.End == nil {
+				continue
+			}
+
+			duration, err := calculateTimeInterval(entry.TimeInterval.Start, *entry.TimeInterval.End)
+			if err != nil {
+				return 0, errors.New("failed to calculate time interval")
+			}
+			totalDuration += duration
+		}
+
+		page++
 	}
 	return totalDuration, nil
 }

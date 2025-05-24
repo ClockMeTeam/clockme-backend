@@ -11,7 +11,7 @@ import (
 
 func NewConnectionPool(dbCfg config.DatabaseConfig) (pool *pgxpool.Pool, err error) {
 
-	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s",
+	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s&statement_cache_mode=describe",
 		dbCfg.User,
 		dbCfg.Password,
 		dbCfg.Host,
