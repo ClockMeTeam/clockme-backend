@@ -6,19 +6,20 @@ import (
 	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/maevlava/ftf-clockify/internal/config"
+	"log"
 )
 
 func NewConnectionPool(dbCfg config.DatabaseConfig) (pool *pgxpool.Pool, err error) {
 
-	sslMode := dbCfg.SSLMode
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
+	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s",
 		dbCfg.User,
 		dbCfg.Password,
 		dbCfg.Host,
 		dbCfg.Port,
 		dbCfg.Name,
-		sslMode,
+		dbCfg.SSLMode,
 	)
+	log.Printf("Connecting to database: \n%s", dsn)
 	poolConfig, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, errors.New("error parsing connection string")
