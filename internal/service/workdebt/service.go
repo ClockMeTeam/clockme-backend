@@ -76,12 +76,13 @@ func calculateGrossWorkingHoursOwed() (time.Duration, error) {
 	baseWorkingHours := time.Duration(BASE_WORKING_HOURS) * time.Hour
 
 	dateLayout := "2006-01-02"
-	todayString := time.Now().Format(dateLayout)
-	endDateLoop, err := time.ParseInLocation(dateLayout, todayString, time.UTC)
+	jakarta, _ := time.LoadLocation("Asia/Jakarta")
+	todayString := time.Now().In(jakarta).Format(dateLayout)
+	endDateLoop, err := time.ParseInLocation(dateLayout, todayString, jakarta)
 	if err != nil {
 		return 0, errors.New("failed to parse today's date")
 	}
-	startDateLoop, err := time.ParseInLocation(dateLayout, PROJECT_START, time.UTC)
+	startDateLoop, err := time.ParseInLocation(dateLayout, PROJECT_START, jakarta)
 	if err != nil {
 		return 0, errors.New("failed to parse today's date")
 	}
