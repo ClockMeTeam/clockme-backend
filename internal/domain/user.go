@@ -13,7 +13,7 @@ type User struct {
 	Name       string        `json:"name"`
 	Email      string        `json:"email"`
 	HoursOwed  time.Duration `json:"hours_owed"`
-	//Projects  []Project        `json:"projects"`
+	Projects   []Project     `json:"projects"`
 }
 type UserRepository interface {
 	GetUsers(ctx context.Context) ([]User, error)
