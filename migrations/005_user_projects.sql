@@ -9,8 +9,8 @@ CREATE TABLE user_projects(
 );
 
 -- index for faster lookups
-CREATE INDEX idx_user_projects_user_id ON user_projects(user_id)
-CREATE INDEX idx_user_projects_projects_id ON user_projects(projects_id)
+CREATE INDEX idx_user_projects_user_id ON user_projects(user_id);
+CREATE INDEX idx_user_projects_projects_id ON user_projects(projects_id);
 
 -- +goose Down
 DROP TABLE IF EXISTS user_projects;
