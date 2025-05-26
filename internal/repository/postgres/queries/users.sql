@@ -1,10 +1,11 @@
 -- name: CreateUser :one
-INSERT INTO users (id, name, email, update_at)
+INSERT INTO users (id, clockify_id, name, email, update_at)
 VALUES (
         $1,
         $2,
         $3,
-        $4
+        $4,
+        $5
        )
 RETURNING *;
 

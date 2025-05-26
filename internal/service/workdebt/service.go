@@ -56,7 +56,7 @@ func (w workDebtService) GetUsersWorkDebt() ([]domain.User, error) {
 	}
 
 	for i, user := range users {
-		actual, err := calculateTotalActualWorkingHours(w.config.WorkspaceId, user.ID, w.config.ClockifySecret)
+		actual, err := calculateTotalActualWorkingHours(w.config.WorkspaceId, user.ClockifyID, w.config.ClockifySecret)
 		if err != nil {
 			return []domain.User{}, err
 		}

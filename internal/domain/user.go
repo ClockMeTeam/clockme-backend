@@ -8,10 +8,11 @@ import (
 // todo change from ID to clockify ID and create UUID for current ID
 // todo add start date
 type User struct {
-	ID        string        `json:"id"`
-	Name      string        `json:"name"`
-	Email     string        `json:"email"`
-	HoursOwed time.Duration `json:"hours_owed"`
+	ID         string        `json:"id"`
+	ClockifyID string        `json:"clockify_id"`
+	Name       string        `json:"name"`
+	Email      string        `json:"email"`
+	HoursOwed  time.Duration `json:"hours_owed"`
 	//Projects  []Project        `json:"projects"`
 }
 type UserRepository interface {
