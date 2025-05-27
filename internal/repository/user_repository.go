@@ -9,8 +9,6 @@ import (
 	"github.com/maevlava/ftf-clockify/internal/repository/postgres/db"
 )
 
-//Interfaces
-
 type PgUserRepository struct {
 	q *db.Queries
 }

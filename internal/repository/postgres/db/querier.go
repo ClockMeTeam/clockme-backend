@@ -6,13 +6,24 @@ package db
 
 import (
 	"context"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
+	CreateProject(ctx context.Context, name string) (Project, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteAllUsers(ctx context.Context) error
+	DeleteProjectByName(ctx context.Context, name string) error
+	GetProjectByName(ctx context.Context, name string) (Project, error)
+	GetProjectType(ctx context.Context, id uuid.UUID) (pgtype.Text, error)
+	GetProjectUsers(ctx context.Context, projectID uuid.UUID) ([]User, error)
+	GetProjects(ctx context.Context) ([]Project, error)
 	GetUser(ctx context.Context, name string) (User, error)
 	GetUsers(ctx context.Context) ([]User, error)
+	UpdateProject(ctx context.Context, arg UpdateProjectParams) (Project, error)
+	UpdateProjectType(ctx context.Context, arg UpdateProjectTypeParams) (Project, error)
 }
 
 var _ Querier = (*Queries)(nil)

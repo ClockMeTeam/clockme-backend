@@ -9,27 +9,24 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, clockify_id, name, email, updated_at)
+INSERT INTO users (id, clockify_id, name, email)
 VALUES (
         $1,
         $2,
         $3,
-        $4,
-        $5
+        $4
        )
 RETURNING id, clockify_id, name, email, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	ID         uuid.UUID        `json:"id"`
-	ClockifyID string           `json:"clockify_id"`
-	Name       string           `json:"name"`
-	Email      string           `json:"email"`
-	UpdatedAt  pgtype.Timestamp `json:"updated_at"`
+	ID         uuid.UUID `json:"id"`
+	ClockifyID string    `json:"clockify_id"`
+	Name       string    `json:"name"`
+	Email      string    `json:"email"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -38,7 +35,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.ClockifyID,
 		arg.Name,
 		arg.Email,
-		arg.UpdatedAt,
 	)
 	var i User
 	err := row.Scan(

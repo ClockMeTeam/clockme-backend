@@ -34,11 +34,11 @@ type User struct {
 }
 
 type UserProject struct {
-	ID         uuid.UUID        `json:"id"`
-	UserID     uuid.UUID        `json:"user_id"`
-	ProjectsID uuid.UUID        `json:"projects_id"`
-	CreatedAt  pgtype.Timestamp `json:"created_at"`
-	UpdatedAt  pgtype.Timestamp `json:"updated_at"`
+	ID        uuid.UUID        `json:"id"`
+	UserID    uuid.UUID        `json:"user_id"`
+	ProjectID uuid.UUID        `json:"project_id"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }
 
 type Workspace struct {
