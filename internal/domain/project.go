@@ -1,7 +1,9 @@
 package domain
 
+import "github.com/google/uuid"
+
 type Project struct {
-	ID        string      `json:"id"`
+	ID        uuid.UUID   `json:"id"`
 	Name      string      `json:"name"`
 	TypeID    string      `json:"type_id"`
 	Type      ProjectType `json:"type"`
