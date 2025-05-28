@@ -13,15 +13,21 @@ import (
 )
 
 const createProject = `-- name: CreateProject :one
-INSERT INTO projects(name) VALUES ($1)
-RETURNING id, name, type_id, created_at, updated_at
+INSERT INTO projects(name, clockify_id) VALUES ($1, $2)
+RETURNING id, clockify_id, name, type_id, created_at, updated_at
 `
 
-func (q *Queries) CreateProject(ctx context.Context, name string) (Project, error) {
-	row := q.db.QueryRow(ctx, createProject, name)
+type CreateProjectParams struct {
+	Name       string `json:"name"`
+	ClockifyID string `json:"clockify_id"`
+}
+
+func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error) {
+	row := q.db.QueryRow(ctx, createProject, arg.Name, arg.ClockifyID)
 	var i Project
 	err := row.Scan(
 		&i.ID,
+		&i.ClockifyID,
 		&i.Name,
 		&i.TypeID,
 		&i.CreatedAt,
@@ -40,7 +46,7 @@ func (q *Queries) DeleteProjectByName(ctx context.Context, name string) error {
 }
 
 const getProjectByName = `-- name: GetProjectByName :one
-SELECT id, name, type_id, created_at, updated_at FROM projects WHERE name = $1
+SELECT id, clockify_id, name, type_id, created_at, updated_at FROM projects WHERE name = $1
 `
 
 func (q *Queries) GetProjectByName(ctx context.Context, name string) (Project, error) {
@@ -48,6 +54,7 @@ func (q *Queries) GetProjectByName(ctx context.Context, name string) (Project, e
 	var i Project
 	err := row.Scan(
 		&i.ID,
+		&i.ClockifyID,
 		&i.Name,
 		&i.TypeID,
 		&i.CreatedAt,
@@ -103,7 +110,7 @@ func (q *Queries) GetProjectUsers(ctx context.Context, projectID uuid.UUID) ([]U
 }
 
 const getProjects = `-- name: GetProjects :many
-SELECT id, name, type_id, created_at, updated_at FROM projects
+SELECT id, clockify_id, name, type_id, created_at, updated_at FROM projects
 `
 
 func (q *Queries) GetProjects(ctx context.Context) ([]Project, error) {
@@ -117,6 +124,7 @@ func (q *Queries) GetProjects(ctx context.Context) ([]Project, error) {
 		var i Project
 		if err := rows.Scan(
 			&i.ID,
+			&i.ClockifyID,
 			&i.Name,
 			&i.TypeID,
 			&i.CreatedAt,
@@ -139,7 +147,7 @@ SET
     type_id = COALESCE($2, type_id),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $3
-RETURNING id, name, type_id, created_at, updated_at
+RETURNING id, clockify_id, name, type_id, created_at, updated_at
 `
 
 type UpdateProjectParams struct {
@@ -153,6 +161,7 @@ func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (P
 	var i Project
 	err := row.Scan(
 		&i.ID,
+		&i.ClockifyID,
 		&i.Name,
 		&i.TypeID,
 		&i.CreatedAt,
@@ -167,7 +176,7 @@ SET
     type_id = $1,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $2
-RETURNING id, name, type_id, created_at, updated_at
+RETURNING id, clockify_id, name, type_id, created_at, updated_at
 `
 
 type UpdateProjectTypeParams struct {
@@ -180,6 +189,7 @@ func (q *Queries) UpdateProjectType(ctx context.Context, arg UpdateProjectTypePa
 	var i Project
 	err := row.Scan(
 		&i.ID,
+		&i.ClockifyID,
 		&i.Name,
 		&i.TypeID,
 		&i.CreatedAt,

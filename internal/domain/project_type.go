@@ -14,6 +14,7 @@ type ProjectType struct {
 
 type ProjectTypeRepository interface {
 	GetProjectType(ctx context.Context, name string) (ProjectType, error)
+	GetProjectTypes(ctx context.Context) ([]ProjectType, error)
 	UpdateProjectType(ctx context.Context, name string) (ProjectType, error)
 	CreateProjectType(ctx context.Context, name string) (ProjectType, error)
 	DeleteProjectTypeByName(ctx context.Context, name string) error

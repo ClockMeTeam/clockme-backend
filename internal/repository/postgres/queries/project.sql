@@ -14,7 +14,7 @@ WHERE id = $3
 RETURNING *;
 
 -- name: CreateProject :one
-INSERT INTO projects(name) VALUES ($1)
+INSERT INTO projects(name, clockify_id) VALUES ($1, $2)
 RETURNING *;
 
 -- name: DeleteProjectByName :exec

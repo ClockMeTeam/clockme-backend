@@ -12,7 +12,7 @@ import (
 )
 
 type Querier interface {
-	CreateProject(ctx context.Context, name string) (Project, error)
+	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteAllUsers(ctx context.Context) error
 	DeleteProjectByName(ctx context.Context, name string) error
