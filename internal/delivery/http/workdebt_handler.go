@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/maevlava/ftf-clockify/internal/service/workdebt"
+	"log"
 	"net/http"
 )
 
@@ -36,5 +37,25 @@ func (h *WorkDebtHandler) GetUsersWorkDebt(w http.ResponseWriter, r *http.Reques
 		})
 	}
 
+	RespondWithJSON(w, http.StatusOK, response)
+}
+func (h *WorkDebtHandler) GetUsersWorkDebtByType(w http.ResponseWriter, r *http.Request) {
+	type Response struct {
+		Name      string            `json:"name"`
+		Email     string            `json:"email"`
+		HoursOwed map[string]string `json:"hours_owed"`
+	}
+	var response []Response
+	users, usersTypeHours, err := h.service.GetWorkDebtByProjectType()
+	if err != nil {
+		log.Printf("Error getting work debt by project type: %v", err)
+	}
+	for i, user := range users {
+		response = append(response, Response{
+			Name:      user.Name,
+			Email:     user.Email,
+			HoursOwed: usersTypeHours[i],
+		})
+	}
 	RespondWithJSON(w, http.StatusOK, response)
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/maevlava/ftf-clockify/internal/config"
 	"github.com/maevlava/ftf-clockify/internal/domain"
+	"io"
 	"log"
 	"net/http"
 	"slices"
@@ -28,19 +29,27 @@ var HOLIDAYS = []string{"Tuesday", "Thursday"}
 
 type WorkDebtService interface {
 	GetUsersWorkDebt() ([]domain.User, error)
-	GetWorkDebtByProject(projectId string) (string, error)
+	GetWorkDebtByProjectType() ([]domain.User, []map[string]string, error)
 }
 
 type workDebtService struct {
-	config   *config.ApiConfig
-	userRepo domain.UserRepository
-	//	projectRepo domain.ProjectRepository
+	config          *config.ApiConfig
+	userRepo        domain.UserRepository
+	projectRepo     domain.ProjectRepository
+	projectTypeRepo domain.ProjectTypeRepository
 }
 
-func NewService(cfg *config.ApiConfig, userRepo domain.UserRepository) WorkDebtService {
+func NewService(
+	cfg *config.ApiConfig,
+	userRepo domain.UserRepository,
+	projectRepo domain.ProjectRepository,
+	projectTypeRepo domain.ProjectTypeRepository) WorkDebtService {
+
 	return &workDebtService{
-		config:   cfg,
-		userRepo: userRepo,
+		config:          cfg,
+		userRepo:        userRepo,
+		projectRepo:     projectRepo,
+		projectTypeRepo: projectTypeRepo,
 	}
 }
 
@@ -65,9 +74,117 @@ func (w workDebtService) GetUsersWorkDebt() ([]domain.User, error) {
 
 	return users, nil
 }
-func (w workDebtService) GetWorkDebtByProject(projectId string) (string, error) {
-	//TODO implement me
-	panic("implement me")
+func (w workDebtService) GetWorkDebtByProjectType() ([]domain.User, []map[string]string, error) {
+	// Get all project types
+	projectTypes, err := w.projectTypeRepo.GetProjectTypes(context.TODO())
+	if err != nil {
+		return nil, nil, fmt.Errorf("error getting project type: %w", err)
+	}
+	// get all users
+	users, err := w.userRepo.GetUsers(context.TODO())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var readableUserTypeHours []map[string]string
+	for _, user := range users {
+		typeHours, err := filterProjectsFromTimeEntries(w.config.WorkspaceId, user.ClockifyID, w.config.ClockifySecret, projectTypes, w.projectRepo)
+		if err != nil {
+			return nil, nil, err
+		}
+		readable := make(map[string]string)
+		for k, v := range typeHours {
+			log.Printf("%s", k)
+			readable[k] = v.String()
+		}
+		readableUserTypeHours = append(readableUserTypeHours, readable)
+	}
+
+	return users, readableUserTypeHours, nil
+}
+
+// Improve to reduce redundant db calls on the same projectId (now using cache)
+// TODO improve using go routines
+func filterProjectsFromTimeEntries(workspaceId, userId, apiKey string, projectTypes []domain.ProjectType, projectRepo domain.ProjectRepository) (map[string]time.Duration, error) {
+	// get user time entries
+	type Response struct {
+		TimeInterval TimeInterval `json:"timeInterval"`
+		ProjectId    string       `json:"projectId"`
+	}
+
+	// variable total hours per types
+	typeHours := make(map[string]time.Duration)
+
+	page := 1
+	pageSize := 100
+	for {
+		// request
+		resp, err := requestGetTimeEntries(workspaceId, userId, apiKey, &page, &pageSize)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+		var response []Response
+		if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+			return nil, fmt.Errorf("error decoding response: %w", err)
+		}
+		if len(response) == 0 {
+			break
+		}
+		// get the intervals and the projectIds
+		projectTypeCache := make(map[string]domain.ProjectType)
+		for _, entry := range response {
+			if entry.TimeInterval.End == nil {
+				continue
+			}
+
+			pt, ok := projectTypeCache[entry.ProjectId]
+			if !ok {
+				projectType, err := projectRepo.GetProjectTypeByClockifyID(context.TODO(), entry.ProjectId)
+				if err != nil {
+					log.Printf("Missing project in DB for clockify_id: %s", entry.ProjectId)
+					return nil, fmt.Errorf("error getting project type: %w", err)
+				}
+				if projectType.Name == "" {
+					log.Printf("Project found but has no type assigned (empty name). Clockify projectId: %s", entry.ProjectId)
+					continue // or assign projectType.Name = "Unknown"
+				}
+				projectTypeCache[entry.ProjectId] = projectType
+				pt = projectType
+			}
+
+			duration, err := calculateTimeInterval(entry.TimeInterval.Start, *entry.TimeInterval.End)
+			if err != nil {
+				return nil, fmt.Errorf("failed to calculate time interval err: %w", err)
+			}
+
+			// add type hours for type in projectId
+			typeHours[pt.Name] += duration
+		}
+		page++
+	}
+	return typeHours, nil
+}
+func requestGetTimeEntries(workspaceId, userId, apiKey string, page, pageSize *int) (*http.Response, error) {
+	client := &http.Client{}
+
+	url := fmt.Sprintf("https://api.clockify.me/api/v1/workspaces/%s/user/%s/time-entries?page=%d&page-size=%d", workspaceId, userId, *page, *pageSize)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request")
+	}
+	req.Header.Add("X-Api-Key", apiKey)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to do time entries request: %w", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		return nil, fmt.Errorf("server error: status code %d, body: %s", resp.StatusCode, string(body))
+	}
+	return resp, nil
 }
 
 func calculateGrossWorkingHoursOwed() (time.Duration, error) {
@@ -104,16 +221,12 @@ func calculateGrossWorkingHoursOwed() (time.Duration, error) {
 }
 func calculateTotalActualWorkingHours(workspaceId, userId, apiKey string) (time.Duration, error) {
 	log.Printf("CALCULATE TOTAL WORKING HOURS\nWORKSPACE: %s\nUSER: %s\nAPI_KEY: %s\n", workspaceId, userId, apiKey)
-	type TimeInterval struct {
-		Start string  `json:"start"`
-		End   *string `json:"end"`
-	}
 	type Response struct {
 		TimeInterval TimeInterval `json:"timeInterval"`
 	}
 	client := &http.Client{}
 	page := 1
-	pageSize := 1000
+	pageSize := 100
 	var totalDuration time.Duration
 
 	for {
@@ -182,4 +295,9 @@ func calculateTimeInterval(start, end string) (time.Duration, error) {
 	duration := eTime.Sub(sTime)
 
 	return duration, nil
+}
+
+type TimeInterval struct {
+	Start string  `json:"start"`
+	End   *string `json:"end"`
 }

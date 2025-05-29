@@ -32,9 +32,11 @@ func main() {
 
 	// repositories
 	userRepo := repository.NewPgUserRepository(dbPool)
+	projectRepo := repository.NewPgProjectRepository(dbPool)
+	projectTypeRepo := repository.NewPgProjectTypeRepository(dbPool)
 
 	// Services
-	workDebtService := workdebt.NewService(&cfg.API, userRepo)
+	workDebtService := workdebt.NewService(&cfg.API, userRepo, projectRepo, projectTypeRepo)
 
 	// Handlers
 	workDebtHandler := httpdelivery.NewWorkDebtHandler(workDebtService)
