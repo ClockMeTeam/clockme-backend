@@ -1,10 +1,10 @@
--- name: GetProjectType :one
+-- name: GetProjectProjectType :one
 SELECT * FROM project_types WHERE name = $1;
 
 -- name: GetProjectTypes :many
 SELECT * FROM project_types;
 
--- name: UpdateProjectType :one
+-- name: UpdateProjectProjectType :one
 UPDATE project_types
 SET
     name = $1,

@@ -25,6 +25,11 @@ SELECT pt.name FROM projects p
 LEFT JOIN project_types pt  ON p.type_id = pt.id
 WHERE p.id = $1;
 
+-- name: GetProjectTypeByClockifyId :one
+SELECT pt.* FROM projects p
+LEFT JOIN project_types pt  ON p.type_id = pt.id
+WHERE p.clockify_id = $1;
+
 -- name: UpdateProjectType :one
 UPDATE projects
 SET

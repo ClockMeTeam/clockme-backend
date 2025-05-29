@@ -22,7 +22,8 @@ type ProjectRepository interface {
 	CreateProject(ctx context.Context, project Project) (Project, error)
 	DeleteProjectByName(ctx context.Context, name string) error
 
-	GetProjectType(ctx context.Context, name string) (ProjectType, error)
+	GetProjectType(ctx context.Context, clockifyID string) (ProjectType, error)
+	GetProjectTypeByClockifyID(ctx context.Context, clockifyID string) (ProjectType, error)
 	UpdateProjectType(ctx context.Context, typeID string) (ProjectType, error)
 
 	GetProjectUsers(ctx context.Context, name string) ([]User, error)

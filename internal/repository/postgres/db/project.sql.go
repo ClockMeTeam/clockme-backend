@@ -69,11 +69,36 @@ LEFT JOIN project_types pt  ON p.type_id = pt.id
 WHERE p.id = $1
 `
 
-func (q *Queries) GetProjectType(ctx context.Context, id uuid.UUID) (pgtype.Text, error) {
+func (q *Queries) GetProjectType(ctx context.Context, id uuid.UUID) (string, error) {
 	row := q.db.QueryRow(ctx, getProjectType, id)
-	var name pgtype.Text
+	var name string
 	err := row.Scan(&name)
 	return name, err
+}
+
+const getProjectTypeByClockifyId = `-- name: GetProjectTypeByClockifyId :one
+SELECT pt.id, pt.name, pt.created_at, pt.updated_at FROM projects p
+LEFT JOIN project_types pt  ON p.type_id = pt.id
+WHERE p.clockify_id = $1
+`
+
+type GetProjectTypeByClockifyIdRow struct {
+	ID        *uuid.UUID       `json:"id"`
+	Name      string           `json:"name"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+}
+
+func (q *Queries) GetProjectTypeByClockifyId(ctx context.Context, clockifyID string) (GetProjectTypeByClockifyIdRow, error) {
+	row := q.db.QueryRow(ctx, getProjectTypeByClockifyId, clockifyID)
+	var i GetProjectTypeByClockifyIdRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getProjectUsers = `-- name: GetProjectUsers :many
@@ -151,9 +176,9 @@ RETURNING id, clockify_id, name, type_id, created_at, updated_at
 `
 
 type UpdateProjectParams struct {
-	Name   string      `json:"name"`
-	TypeID pgtype.UUID `json:"type_id"`
-	ID     uuid.UUID   `json:"id"`
+	Name   string     `json:"name"`
+	TypeID *uuid.UUID `json:"type_id"`
+	ID     uuid.UUID  `json:"id"`
 }
 
 func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (Project, error) {
@@ -180,8 +205,8 @@ RETURNING id, clockify_id, name, type_id, created_at, updated_at
 `
 
 type UpdateProjectTypeParams struct {
-	TypeID pgtype.UUID `json:"type_id"`
-	ID     uuid.UUID   `json:"id"`
+	TypeID *uuid.UUID `json:"type_id"`
+	ID     uuid.UUID  `json:"id"`
 }
 
 func (q *Queries) UpdateProjectType(ctx context.Context, arg UpdateProjectTypeParams) (Project, error) {

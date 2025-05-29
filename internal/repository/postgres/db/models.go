@@ -13,7 +13,7 @@ type Project struct {
 	ID         uuid.UUID        `json:"id"`
 	ClockifyID string           `json:"clockify_id"`
 	Name       string           `json:"name"`
-	TypeID     pgtype.UUID      `json:"type_id"`
+	TypeID     *uuid.UUID       `json:"type_id"`
 	CreatedAt  pgtype.Timestamp `json:"created_at"`
 	UpdatedAt  pgtype.Timestamp `json:"updated_at"`
 }
