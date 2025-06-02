@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/maevlava/ftf-clockify/internal/config"
-	"github.com/maevlava/ftf-clockify/internal/domain"
+	"github.com/clockme/clockme-backend/internal/config"
+	"github.com/clockme/clockme-backend/internal/domain"
 	"io"
 	"log"
 	"net/http"
@@ -80,27 +80,34 @@ func (w workDebtService) GetWorkDebtByProjectType() ([]domain.User, []map[string
 	if err != nil {
 		return nil, nil, fmt.Errorf("error getting project type: %w", err)
 	}
+	// Get gross base hours per type
+	grossHoursPerType, err := calculateGrossWorkingHoursOwedByProjectType(w.projectTypeRepo)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error getting project type: %w", err)
+	}
 	// get all users
 	users, err := w.userRepo.GetUsers(context.TODO())
 	if err != nil {
 		return nil, nil, err
 	}
 
-	var readableUserTypeHours []map[string]string
+	var readableUserTypeDebts []map[string]string
 	for _, user := range users {
-		typeHours, err := filterProjectsFromTimeEntries(w.config.WorkspaceId, user.ClockifyID, w.config.ClockifySecret, projectTypes, w.projectRepo)
+		userWorkedHours, err := filterProjectsFromTimeEntries(w.config.WorkspaceId, user.ClockifyID, w.config.ClockifySecret, projectTypes, w.projectRepo)
 		if err != nil {
 			return nil, nil, err
 		}
-		readable := make(map[string]string)
-		for k, v := range typeHours {
-			log.Printf("%s", k)
-			readable[k] = v.String()
+		userDebt := make(map[string]string)
+		for projectType, gross := range grossHoursPerType {
+			actual := userWorkedHours[projectType]
+			debt := gross - actual
+			log.Printf("debt for %s: %s\n", projectType, debt.String())
+			userDebt[projectType] = debt.String()
 		}
-		readableUserTypeHours = append(readableUserTypeHours, readable)
+		readableUserTypeDebts = append(readableUserTypeDebts, userDebt)
 	}
 
-	return users, readableUserTypeHours, nil
+	return users, readableUserTypeDebts, nil
 }
 
 // Improve to reduce redundant db calls on the same projectId (now using cache)
@@ -186,7 +193,6 @@ func requestGetTimeEntries(workspaceId, userId, apiKey string, page, pageSize *i
 	}
 	return resp, nil
 }
-
 func calculateGrossWorkingHoursOwed() (time.Duration, error) {
 	var grossWorkHoursOwed time.Duration
 
@@ -218,6 +224,52 @@ func calculateGrossWorkingHoursOwed() (time.Duration, error) {
 		currentDate = currentDate.AddDate(0, 0, 1)
 	}
 	return grossWorkHoursOwed, nil
+}
+func calculateGrossWorkingHoursOwedByProjectType(projectTypeRepo domain.ProjectTypeRepository) (map[string]time.Duration, error) {
+	projectTypes, err := projectTypeRepo.GetProjectTypes(context.TODO())
+	if err != nil {
+		return nil, fmt.Errorf("error getting project type: %w", err)
+	}
+
+	baseHoursPerType := make(map[string]time.Duration)
+	for _, projectType := range projectTypes {
+		log.Printf("Project Hour: %d\n", projectType.BaseHour)
+		baseHoursPerType[projectType.Name] = time.Duration(projectType.BaseHour) * time.Hour
+		log.Printf("Base hours for %s: %s\n", projectType.Name, baseHoursPerType[projectType.Name])
+	}
+
+	dateLayout := "2006-01-02"
+	jakarta, _ := time.LoadLocation("Asia/Jakarta")
+	todayString := time.Now().In(jakarta).Format(dateLayout)
+	endDateLoop, err := time.ParseInLocation(dateLayout, todayString, jakarta)
+	if err != nil {
+		return nil, errors.New("failed to parse today's date")
+	}
+	startDateLoop, err := time.ParseInLocation(dateLayout, PROJECT_START, jakarta)
+	if err != nil {
+		return nil, errors.New("failed to parse today's date")
+	}
+	log.Printf("Iterating from %s to %s\n", startDateLoop, endDateLoop)
+
+	totalHoursPerType := make(map[string]time.Duration)
+	currentDate := startDateLoop
+	for !currentDate.After(endDateLoop) {
+		dayOfWeek := currentDate.Weekday().String()
+
+		if slices.Contains(HOLIDAYS, dayOfWeek) {
+			currentDate = currentDate.AddDate(0, 0, 1)
+			continue
+		}
+
+		for name, baseHours := range baseHoursPerType {
+			totalHoursPerType[name] += baseHours
+			//log.Printf("Total hours for %s: %s\n", name, totalHoursPerType[name])
+		}
+
+		currentDate = currentDate.AddDate(0, 0, 1)
+	}
+
+	return totalHoursPerType, nil
 }
 func calculateTotalActualWorkingHours(workspaceId, userId, apiKey string) (time.Duration, error) {
 	log.Printf("CALCULATE TOTAL WORKING HOURS\nWORKSPACE: %s\nUSER: %s\nAPI_KEY: %s\n", workspaceId, userId, apiKey)

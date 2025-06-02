@@ -3,9 +3,9 @@ package repository
 import (
 	"context"
 	"fmt"
+	"github.com/clockme/clockme-backend/internal/domain"
+	"github.com/clockme/clockme-backend/internal/repository/postgres/db"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/maevlava/ftf-clockify/internal/domain"
-	"github.com/maevlava/ftf-clockify/internal/repository/postgres/db"
 )
 
 type PgProjectTypeRepository struct {
@@ -31,7 +31,9 @@ func (p PgProjectTypeRepository) GetProjectTypes(ctx context.Context) ([]domain.
 	var projectTypes []domain.ProjectType
 	for _, projectType := range dbProjectTypes {
 		projectTypes = append(projectTypes, domain.ProjectType{
-			Name: projectType.Name,
+			ID:       projectType.ID,
+			Name:     projectType.Name,
+			BaseHour: projectType.BaseHour,
 		})
 	}
 	return projectTypes, nil

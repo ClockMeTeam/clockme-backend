@@ -11,7 +11,7 @@ import (
 
 const createProjectType = `-- name: CreateProjectType :one
 INSERT INTO project_types(name) VALUES ($1)
-RETURNING id, name, created_at, updated_at
+RETURNING id, name, base_hour, created_at, updated_at
 `
 
 func (q *Queries) CreateProjectType(ctx context.Context, name string) (ProjectType, error) {
@@ -20,6 +20,7 @@ func (q *Queries) CreateProjectType(ctx context.Context, name string) (ProjectTy
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.BaseHour,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -28,7 +29,7 @@ func (q *Queries) CreateProjectType(ctx context.Context, name string) (ProjectTy
 
 const deleteProjectTypeByName = `-- name: DeleteProjectTypeByName :exec
 DELETE FROM project_types WHERE name = $1
-RETURNING id, name, created_at, updated_at
+RETURNING id, name, base_hour, created_at, updated_at
 `
 
 func (q *Queries) DeleteProjectTypeByName(ctx context.Context, name string) error {
@@ -37,7 +38,7 @@ func (q *Queries) DeleteProjectTypeByName(ctx context.Context, name string) erro
 }
 
 const getProjectProjectType = `-- name: GetProjectProjectType :one
-SELECT id, name, created_at, updated_at FROM project_types WHERE name = $1
+SELECT id, name, base_hour, created_at, updated_at FROM project_types WHERE name = $1
 `
 
 func (q *Queries) GetProjectProjectType(ctx context.Context, name string) (ProjectType, error) {
@@ -46,6 +47,7 @@ func (q *Queries) GetProjectProjectType(ctx context.Context, name string) (Proje
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.BaseHour,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -53,7 +55,7 @@ func (q *Queries) GetProjectProjectType(ctx context.Context, name string) (Proje
 }
 
 const getProjectTypes = `-- name: GetProjectTypes :many
-SELECT id, name, created_at, updated_at FROM project_types
+SELECT id, name, base_hour, created_at, updated_at FROM project_types
 `
 
 func (q *Queries) GetProjectTypes(ctx context.Context) ([]ProjectType, error) {
@@ -68,6 +70,7 @@ func (q *Queries) GetProjectTypes(ctx context.Context) ([]ProjectType, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
+			&i.BaseHour,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -87,7 +90,7 @@ SET
     name = $1,
     updated_at = CURRENT_TIMESTAMP
 WHERE name = $2
-RETURNING id, name, created_at, updated_at
+RETURNING id, name, base_hour, created_at, updated_at
 `
 
 type UpdateProjectProjectTypeParams struct {
@@ -101,6 +104,7 @@ func (q *Queries) UpdateProjectProjectType(ctx context.Context, arg UpdateProjec
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.BaseHour,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

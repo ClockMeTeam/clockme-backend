@@ -21,6 +21,7 @@ type Project struct {
 type ProjectType struct {
 	ID        uuid.UUID        `json:"id"`
 	Name      string           `json:"name"`
+	BaseHour  int32            `json:"base_hour"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }

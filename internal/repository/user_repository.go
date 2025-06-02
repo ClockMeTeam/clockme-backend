@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/clockme/clockme-backend/internal/domain"
+	"github.com/clockme/clockme-backend/internal/repository/postgres/db"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/maevlava/ftf-clockify/internal/domain"
-	"github.com/maevlava/ftf-clockify/internal/repository/postgres/db"
 )
 
 type PgUserRepository struct {

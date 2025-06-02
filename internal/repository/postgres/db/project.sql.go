@@ -77,7 +77,7 @@ func (q *Queries) GetProjectType(ctx context.Context, id uuid.UUID) (string, err
 }
 
 const getProjectTypeByClockifyId = `-- name: GetProjectTypeByClockifyId :one
-SELECT pt.id, pt.name, pt.created_at, pt.updated_at FROM projects p
+SELECT pt.id, pt.name, pt.base_hour, pt.created_at, pt.updated_at FROM projects p
 LEFT JOIN project_types pt  ON p.type_id = pt.id
 WHERE p.clockify_id = $1
 `
@@ -85,6 +85,7 @@ WHERE p.clockify_id = $1
 type GetProjectTypeByClockifyIdRow struct {
 	ID        *uuid.UUID       `json:"id"`
 	Name      string           `json:"name"`
+	BaseHour  pgtype.Int4      `json:"base_hour"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }
@@ -95,6 +96,7 @@ func (q *Queries) GetProjectTypeByClockifyId(ctx context.Context, clockifyID str
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.BaseHour,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

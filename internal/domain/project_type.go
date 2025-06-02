@@ -8,6 +8,7 @@ import (
 type ProjectType struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
+	BaseHour  int32     `json:"base_hour" db:"base_hour"`
 	CreatedAt string    `json:"created_at"`
 	UpdateAt  string    `json:"update_at"`
 }

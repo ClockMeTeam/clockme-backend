@@ -1,7 +1,7 @@
 package http
 
 import (
-	"github.com/maevlava/ftf-clockify/internal/service/workdebt"
+	"github.com/clockme/clockme-backend/internal/service/workdebt"
 	"log"
 	"net/http"
 )

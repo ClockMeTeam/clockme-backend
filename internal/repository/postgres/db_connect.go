@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/clockme/clockme-backend/internal/config"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/maevlava/ftf-clockify/internal/config"
 	"log"
 )
 

@@ -1,6 +1,6 @@
 package app
 
-import "github.com/maevlava/ftf-clockify/internal/config"
+import "github.com/clockme/clockme-backend/internal/config"
 
 type Application struct {
 	Config *config.Config

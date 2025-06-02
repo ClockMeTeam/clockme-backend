@@ -1,7 +1,7 @@
 package http
 
 import (
-	"github.com/maevlava/ftf-clockify/internal/app"
+	"github.com/clockme/clockme-backend/internal/app"
 	"net/http"
 )
 
