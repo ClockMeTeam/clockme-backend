@@ -1,0 +1,35 @@
+run:
+  timeout: 3m
+  tests: true
+
+linters:
+  enable:
+    - errcheck
+    - errchkjson
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gocritic
+    - gosec
+    - revive
+    - bodyclose
+    - errorlint
+    - funlen
+    - gocyclo
+    - prealloc
+
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+    - golines
+
+issues:
+  exclude-use-default: false
+
+output:
+  format: colored-line-number
+
