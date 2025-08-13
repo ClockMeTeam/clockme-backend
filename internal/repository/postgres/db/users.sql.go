@@ -8,41 +8,42 @@ package db
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/google/uuid"
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, name, email, update_at)
+INSERT INTO users (id, clockify_id, name, email)
 VALUES (
         $1,
         $2,
         $3,
         $4
        )
-RETURNING id, name, email, created_at, update_at
+RETURNING id, clockify_id, name, email, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	ID       string           `json:"id"`
-	Name     string           `json:"name"`
-	Email    string           `json:"email"`
-	UpdateAt pgtype.Timestamp `json:"update_at"`
+	ID         uuid.UUID `json:"id"`
+	ClockifyID string    `json:"clockify_id"`
+	Name       string    `json:"name"`
+	Email      string    `json:"email"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, createUser,
 		arg.ID,
+		arg.ClockifyID,
 		arg.Name,
 		arg.Email,
-		arg.UpdateAt,
 	)
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.ClockifyID,
 		&i.Name,
 		&i.Email,
 		&i.CreatedAt,
-		&i.UpdateAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -57,7 +58,7 @@ func (q *Queries) DeleteAllUsers(ctx context.Context) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, name, email, created_at, update_at FROM users WHERE name = $1
+SELECT id, clockify_id, name, email, created_at, updated_at FROM users WHERE name = $1
 `
 
 func (q *Queries) GetUser(ctx context.Context, name string) (User, error) {
@@ -65,16 +66,17 @@ func (q *Queries) GetUser(ctx context.Context, name string) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.ClockifyID,
 		&i.Name,
 		&i.Email,
 		&i.CreatedAt,
-		&i.UpdateAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
-const getUsers = `-- name: GetUsersWorkDebt :many
-SELECT id, name, email, created_at, update_at FROM users
+const getUsers = `-- name: GetUsers :many
+SELECT id, clockify_id, name, email, created_at, updated_at FROM users
 `
 
 func (q *Queries) GetUsers(ctx context.Context) ([]User, error) {
@@ -88,10 +90,11 @@ func (q *Queries) GetUsers(ctx context.Context) ([]User, error) {
 		var i User
 		if err := rows.Scan(
 			&i.ID,
+			&i.ClockifyID,
 			&i.Name,
 			&i.Email,
 			&i.CreatedAt,
-			&i.UpdateAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}

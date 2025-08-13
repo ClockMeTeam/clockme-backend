@@ -1,7 +1,7 @@
 package http
 
 import (
-	"github.com/maevlava/ftf-clockify/internal/app"
+	"github.com/clockme/clockme-backend/internal/app"
 	"net/http"
 )
 
@@ -19,6 +19,7 @@ func apiServerMux(workDebtHandler *WorkDebtHandler) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /users/debts", workDebtHandler.GetUsersWorkDebt)
+	mux.HandleFunc("GET /users/project-debts", workDebtHandler.GetUsersWorkDebtByType)
 
 	return mux
 }

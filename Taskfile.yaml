@@ -1,0 +1,33 @@
+version: "3"
+
+tasks:
+  lint:
+    desc: Linter
+    cmds:
+      - golangci-lint run ./...
+
+  test-cover:
+    desc: Test Coverage
+    cmds:
+      - go test -coverprofile=coverage.out ./...
+      - go tool cover -func=coverage.out
+
+  test-cover-html:
+    desc: Test Coverage display in HTML
+    cmds:
+      - go test -coverprofile=coverage.out ./...
+      - go tool cover -html=coverage.out
+      -
+  sonar:
+    desc: Run SonarQube scanner analysis
+    vars:
+      SONAR_TOKEN:
+        sh: if [ -f .env ]; then grep SONAR_TOKEN_CLOCKME .env | cut -d '=' -f2; else echo "$SONAR_TOKEN_CLOCKME"; fi
+    cmds:
+      - |
+        docker run \
+          --rm \
+          --network="host" \
+          -v "$(pwd):/usr/src" \
+          sonarsource/sonar-scanner-cli \
+          -Dsonar.login={{.SONAR_TOKEN}}

@@ -5,15 +5,42 @@
 package db
 
 import (
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type User struct {
-	ID        string           `json:"id"`
+type Project struct {
+	ID         uuid.UUID        `json:"id"`
+	ClockifyID string           `json:"clockify_id"`
+	Name       string           `json:"name"`
+	TypeID     *uuid.UUID       `json:"type_id"`
+	CreatedAt  pgtype.Timestamp `json:"created_at"`
+	UpdatedAt  pgtype.Timestamp `json:"updated_at"`
+}
+
+type ProjectType struct {
+	ID        uuid.UUID        `json:"id"`
 	Name      string           `json:"name"`
-	Email     string           `json:"email"`
+	BaseHour  int32            `json:"base_hour"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
-	UpdateAt  pgtype.Timestamp `json:"update_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+}
+
+type User struct {
+	ID         uuid.UUID        `json:"id"`
+	ClockifyID string           `json:"clockify_id"`
+	Name       string           `json:"name"`
+	Email      string           `json:"email"`
+	CreatedAt  pgtype.Timestamp `json:"created_at"`
+	UpdatedAt  pgtype.Timestamp `json:"updated_at"`
+}
+
+type UserProject struct {
+	ID        uuid.UUID        `json:"id"`
+	UserID    uuid.UUID        `json:"user_id"`
+	ProjectID uuid.UUID        `json:"project_id"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }
 
 type Workspace struct {

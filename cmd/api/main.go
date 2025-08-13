@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/maevlava/ftf-clockify/internal/repository"
+	"github.com/clockme/clockme-backend/internal/repository"
 
+	"github.com/clockme/clockme-backend/internal/app"
+	"github.com/clockme/clockme-backend/internal/config"
+	httpdelivery "github.com/clockme/clockme-backend/internal/delivery/http"
+	"github.com/clockme/clockme-backend/internal/repository/postgres"
+	"github.com/clockme/clockme-backend/internal/service/workdebt"
 	//"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
-	"github.com/maevlava/ftf-clockify/internal/app"
-	"github.com/maevlava/ftf-clockify/internal/config"
-	httpdelivery "github.com/maevlava/ftf-clockify/internal/delivery/http"
-	"github.com/maevlava/ftf-clockify/internal/repository/postgres"
-	"github.com/maevlava/ftf-clockify/internal/service/workdebt"
 	"log"
 	"net/http"
 	"os"
@@ -32,9 +32,11 @@ func main() {
 
 	// repositories
 	userRepo := repository.NewPgUserRepository(dbPool)
+	projectRepo := repository.NewPgProjectRepository(dbPool)
+	projectTypeRepo := repository.NewPgProjectTypeRepository(dbPool)
 
 	// Services
-	workDebtService := workdebt.NewService(&cfg.API, userRepo)
+	workDebtService := workdebt.NewService(&cfg.API, userRepo, projectRepo, projectTypeRepo)
 
 	// Handlers
 	workDebtHandler := httpdelivery.NewWorkDebtHandler(workDebtService)

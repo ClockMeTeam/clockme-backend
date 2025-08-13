@@ -3,15 +3,19 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
+	"github.com/clockme/clockme-backend/internal/domain"
+	"github.com/clockme/clockme-backend/internal/repository/postgres/db"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/maevlava/ftf-clockify/internal/domain"
-	"github.com/maevlava/ftf-clockify/internal/repository/postgres/db"
 )
-
-//Intefaces
 
 type PgUserRepository struct {
 	q *db.Queries
+}
+
+func (r *PgUserRepository) GetUserProjects(ctx context.Context, name string) ([]domain.Project, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func NewPgUserRepository(pool *pgxpool.Pool) domain.UserRepository {
@@ -22,15 +26,16 @@ func NewPgUserRepository(pool *pgxpool.Pool) domain.UserRepository {
 func (r *PgUserRepository) GetUsers(ctx context.Context) ([]domain.User, error) {
 	dbUsers, err := r.q.GetUsers(ctx)
 	if err != nil {
-		return nil, errors.New("error getting users from db")
+		return nil, fmt.Errorf("error getting users from db %v", err)
 	}
 	var users []domain.User
 
 	for _, user := range dbUsers {
 		users = append(users, domain.User{
-			ID:    user.ID,
-			Name:  user.Name,
-			Email: user.Email,
+			ID:         user.ID,
+			ClockifyID: user.ClockifyID,
+			Name:       user.Name,
+			Email:      user.Email,
 		})
 	}
 
@@ -42,16 +47,18 @@ func (r *PgUserRepository) GetUser(ctx context.Context, name string) (domain.Use
 		return domain.User{}, errors.New("error getting user from db")
 	}
 	return domain.User{
-		ID:    dbUser.ID,
-		Name:  dbUser.Name,
-		Email: dbUser.Email,
+		ID:         dbUser.ID,
+		ClockifyID: dbUser.ClockifyID,
+		Name:       dbUser.Name,
+		Email:      dbUser.Email,
 	}, nil
 }
 func (r *PgUserRepository) CreateUser(ctx context.Context, user domain.User) (domain.User, error) {
 	dbUserParam := db.CreateUserParams{
-		ID:    user.ID,
-		Name:  user.Name,
-		Email: user.Email,
+		ID:         user.ID,
+		ClockifyID: user.ClockifyID,
+		Name:       user.Name,
+		Email:      user.Email,
 	}
 
 	dbUser, err := r.q.CreateUser(ctx, dbUserParam)
@@ -61,9 +68,10 @@ func (r *PgUserRepository) CreateUser(ctx context.Context, user domain.User) (do
 	}
 
 	return domain.User{
-		ID:    dbUser.ID,
-		Name:  dbUser.Name,
-		Email: dbUser.Email,
+		ID:         dbUser.ID,
+		ClockifyID: dbUser.ClockifyID,
+		Name:       dbUser.Name,
+		Email:      dbUser.Email,
 	}, nil
 }
 func (r *PgUserRepository) DeleteAllUsers(ctx context.Context) error {

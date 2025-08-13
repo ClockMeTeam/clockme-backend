@@ -1,12 +1,11 @@
 -- +goose Up
-CREATE TABLE users(
+CREATE TABLE project_types(
     id UUID UNIQUE PRIMARY KEY NOT NULL DEFAULT pg_catalog.gen_random_uuid(),
-    clockify_id TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
+    base_hour INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- +goose Down
-DROP TABLE IF EXISTs users;
+DROP TABLE IF EXISTS project_types;
