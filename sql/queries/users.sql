@@ -1,5 +1,5 @@
 -- name: CreateUser :one
-INSERT INTO users(id, name, email, created_at, updated_at)
+INSERT INTO users(id, name, email)
 VALUES(
        $1,
        $2,
