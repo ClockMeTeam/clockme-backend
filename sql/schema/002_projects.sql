@@ -1,12 +1,11 @@
 -- +goose Up
-CREATE TABLE users(
-    id UUID PRIMARY KEY NOT NULL UNIQUE,
-    hashed_password TEXT NOT NULL,
+CREATE TABLE projects(
+    id UUID PRIMARY KEY UNIQUE NOT NULL,
     name TEXT NOT NULL,
-    email TEXT UNIQUE  NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+--     task_id UUID REFERENCES tasks(id) ON DELETE CASCADE
 );
 
 -- +goose Down
-DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS projects;
