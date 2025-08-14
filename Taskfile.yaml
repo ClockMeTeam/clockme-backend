@@ -24,6 +24,13 @@ tasks:
     cmds:
       - docker compose build --no-cache {{.CLI_ARGS}}
 
+  restart:
+    desc: "Stop, Build, Start"
+    cmds:
+      - task down
+      - task build
+      - task up
+
   migrate:up:
     cmds:
       - goose -dir ./sql/schema postgres "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5433/${POSTGRES_DB}?sslmode=disable" up
