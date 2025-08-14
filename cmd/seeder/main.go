@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"database/sql"
+	"github.com/clockme/clockme-backend/internal/auth"
 	"github.com/clockme/clockme-backend/internal/db"
 	"github.com/clockme/clockme-backend/internal/logger"
 	"github.com/go-faker/faker/v4"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog/log"
+	"math/rand"
 	"os"
 	"time"
 )
@@ -38,11 +40,23 @@ func main() {
 
 	queries := db.New(conn)
 
+	userIDs := seedUsers(queries, ctxBg)
+	projectIDs := seedProjects(queries, ctxBg)
+	seedProjectsUsers(queries, ctxBg, userIDs, projectIDs)
+}
+func seedUsers(queries *db.Queries, ctxBg context.Context) []uuid.UUID {
+	var userIDs []uuid.UUID
+
 	for i := 0; i < 3; i++ {
+		hashedPassword, err := auth.HashPassword(faker.Password())
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to create user")
+		}
 		newUser, err := queries.CreateUser(ctxBg, db.CreateUserParams{
-			ID:    uuid.New(),
-			Name:  faker.Name(),
-			Email: faker.Email(),
+			ID:             uuid.New(),
+			Name:           faker.Name(),
+			HashedPassword: hashedPassword,
+			Email:          faker.Email(),
 		})
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to create user")
@@ -52,6 +66,62 @@ func main() {
 				Str("name", newUser.Name).
 				Str("email", newUser.Email).
 				Msg("Created user")
+			userIDs = append(userIDs, newUser.ID)
+		}
+	}
+	return userIDs
+}
+func seedProjects(queries *db.Queries, ctxBg context.Context) []uuid.UUID {
+	var projectIDs []uuid.UUID
+
+	for i := 0; i < 3; i++ {
+		newProject, err := queries.CreateProject(ctxBg, db.CreateProjectParams{
+			ID:   uuid.New(),
+			Name: faker.Name(),
+		})
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to create project")
+		} else {
+			log.Info().
+				Stringer("id", newProject.ID).
+				Str("name", newProject.Name).
+				Msg("Created project")
+			projectIDs = append(projectIDs, newProject.ID)
+		}
+	}
+	return projectIDs
+}
+func seedProjectsUsers(queries *db.Queries, ctxBg context.Context, userIDs []uuid.UUID, projectIDs []uuid.UUID) {
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	for _, projectID := range projectIDs {
+		// how many users will be added
+		numUserToAdd := r.Intn(len(userIDs)) + 1
+
+		//shuffle the users
+		r.Shuffle(len(userIDs), func(i, j int) {
+			userIDs[i], userIDs[j] = userIDs[j], userIDs[i]
+		})
+
+		for i := 0; i < numUserToAdd; i++ {
+			userID := userIDs[i]
+			_, err := queries.AddUserToProject(ctxBg, db.AddUserToProjectParams{
+				UserID:    userID,
+				ProjectID: projectID,
+			})
+			if err != nil {
+				log.Warn().Err(err).
+					Stringer("user id", userID).
+					Stringer("project id", projectID).
+					Msg("Failed to add user to project might be duplicate")
+
+				continue
+			}
+			log.Info().
+				Stringer("user id", userID).
+				Stringer("project id", projectID).
+				Msg("Added user to project")
 		}
 	}
 }
