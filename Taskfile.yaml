@@ -36,10 +36,10 @@ tasks:
     desc: "Connect to the PostgreSQL database"
     deps: [ up ]
     cmds:
-      - docker-compose exec db psql -U ${POSTGRES_USER} -d ${POSTGRES_DB}
+      - docker compose exec db psql -U ${POSTGRES_USER} -d ${POSTGRES_DB}
 
   db:shell:
     desc: "postgres container"
     deps: [ up ]
     cmds:
-      - docker-compose exec db sh
+      - docker compose exec db sh
