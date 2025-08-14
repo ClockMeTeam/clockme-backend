@@ -10,10 +10,23 @@ import (
 	"github.com/google/uuid"
 )
 
-type User struct {
+type Project struct {
 	ID        uuid.UUID
 	Name      string
-	Email     string
 	CreatedAt sql.NullTime
 	UpdatedAt sql.NullTime
+}
+
+type ProjectsUser struct {
+	UserID    uuid.UUID
+	ProjectID uuid.UUID
+}
+
+type User struct {
+	ID             uuid.UUID
+	HashedPassword string
+	Name           string
+	Email          string
+	CreatedAt      sql.NullTime
+	UpdatedAt      sql.NullTime
 }
