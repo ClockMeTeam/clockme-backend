@@ -1,0 +1,12 @@
+-- +goose Up
+CREATE TABLE users(
+    id UUID PRIMARY KEY NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE  NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+--     project_id UUID REFERENCES projects(id) ON DELETE CASCADE
+);
+
+-- +goose Down
+DROP TABLE IF EXISTS users;
