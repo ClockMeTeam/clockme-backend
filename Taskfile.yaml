@@ -1,0 +1,45 @@
+version: '3'
+dotenv:
+  - .env
+
+tasks:
+  default:
+    cmds:
+      - task --list-all
+    silent: true
+  up:
+    desc: "Start service"
+    cmds:
+      - echo "Starting Docker containers..."
+      - docker compose up -d
+
+  down:
+    desc: "Stop service"
+    cmds:
+      - echo "Stopping Docker containers..."
+      - docker compose down {{.CLI_ARGS}}
+
+  build:
+    desc: "Rebuild service"
+    cmds:
+      - docker compose build --no-cache {{.CLI_ARGS}}
+
+  migrate:up:
+    cmds:
+      - goose -dir ./sql/schema postgres "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5433/${POSTGRES_DB}?sslmode=disable" up
+
+  migrate:down:
+    cmds:
+      - goose -dir ./sql/schema postgres "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5433/${POSTGRES_DB}?sslmode=disable" down
+
+  db:psql:
+    desc: "Connect to the PostgreSQL database"
+    deps: [ up ]
+    cmds:
+      - docker-compose exec db psql -U ${POSTGRES_USER} -d ${POSTGRES_DB}
+
+  db:shell:
+    desc: "postgres container"
+    deps: [ up ]
+    cmds:
+      - docker-compose exec db sh
