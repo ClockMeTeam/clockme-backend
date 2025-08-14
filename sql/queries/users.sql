@@ -1,9 +1,10 @@
 -- name: CreateUser :one
-INSERT INTO users(id, name, email)
+INSERT INTO users(id, name, email, hashed_password)
 VALUES(
        $1,
        $2,
-       $3
+       $3,
+       $4
       )
 RETURNING *;
 
