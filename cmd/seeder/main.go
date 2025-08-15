@@ -125,3 +125,59 @@ func seedProjectsUsers(queries *db.Queries, ctxBg context.Context, userIDs []uui
 		}
 	}
 }
+func seedTasks(queries *db.Queries, ctxBg context.Context) []uuid.UUID {
+	var taskIDs []uuid.UUID
+
+	projectIDs, err := getAllProjectIDs(queries, ctxBg)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Could not fetch project IDs")
+	}
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	for i := 0; i < 8; i++ {
+		randomIndex := r.Intn(len(projectIDs))
+
+		randomProjectID := projectIDs[randomIndex]
+
+		newTask, err := queries.CreateTask(ctxBg, db.CreateTaskParams{
+			ID:        uuid.New(),
+			Name:      faker.Sentence(),
+			ProjectID: randomProjectID,
+		})
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to create task")
+		} else {
+			log.Info().
+				Stringer("id", newTask.ID).
+				Str("name", newTask.Name).
+				Msg("Created task")
+			taskIDs = append(taskIDs, newTask.ID)
+		}
+	}
+
+	return taskIDs
+}
+func getAllUserIDs(queries *db.Queries, ctx context.Context) ([]uuid.UUID, error) {
+	users, err := queries.GetAllUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	userIDs := make([]uuid.UUID, len(users))
+	for i, u := range users {
+		userIDs[i] = u.ID
+	}
+	return userIDs, nil
+}
+func getAllProjectIDs(queries *db.Queries, ctx context.Context) ([]uuid.UUID, error) {
+	projects, err := queries.GetAllProjects(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	projectIDs := make([]uuid.UUID, len(projects))
+	for i, p := range projects {
+		projectIDs[i] = p.ID
+	}
+	return projectIDs, nil
+}
