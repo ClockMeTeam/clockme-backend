@@ -4,7 +4,6 @@ CREATE TABLE projects(
     name TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
---     task_id UUID REFERENCES tasks(id) ON DELETE CASCADE
 );
 
 -- +goose Down
