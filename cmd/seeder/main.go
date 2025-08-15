@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"flag"
 	"github.com/clockme/clockme-backend/internal/auth"
 	"github.com/clockme/clockme-backend/internal/db"
 	"github.com/clockme/clockme-backend/internal/logger"
@@ -17,6 +18,50 @@ import (
 
 func main() {
 	logger.Init()
+	ctxBg := context.Background()
+
+	seedCmd := flag.String("seed", "all", "all, users, projects, tasks, or links")
+	flag.Parse()
+
+	conn, queries := connectDB()
+	defer conn.Close()
+
+	switch *seedCmd {
+	case "all":
+		seedUsers(queries, ctxBg)
+		seedProjects(queries, ctxBg)
+		seedProjectsUsers(queries, ctxBg, seedUsers(queries, ctxBg), seedProjects(queries, ctxBg))
+		seedTasks(queries, ctxBg)
+		break
+	case "users":
+		seedUsers(queries, ctxBg)
+		break
+	case "projects":
+		seedProjects(queries, ctxBg)
+	case "tasks":
+		seedTasks(queries, ctxBg)
+		break
+	case "links":
+		log.Info().Msg("Seeding links only. Fetching existing data...")
+		userIDs, err := getAllUserIDs(queries, ctxBg)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Could not fetch user IDs")
+		}
+		projectIDs, err := getAllProjectIDs(queries, ctxBg)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Could not fetch project IDs")
+		}
+		if len(userIDs) > 0 && len(projectIDs) > 0 {
+			seedProjectsUsers(queries, ctxBg, userIDs, projectIDs)
+		} else {
+			log.Warn().Msg("No users or projects found in the database to link.")
+		}
+	default:
+		log.Error().Msgf("Unknown seed command: %s", *seedCmd)
+	}
+
+}
+func connectDB() (*sql.DB, *db.Queries) {
 	ctxBg := context.Background()
 
 	dbSource := os.Getenv("DB_SOURCE")
