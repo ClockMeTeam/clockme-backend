@@ -22,6 +22,14 @@ type ProjectsUser struct {
 	ProjectID uuid.UUID
 }
 
+type Task struct {
+	ID        uuid.UUID
+	Name      string
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+	ProjectID uuid.UUID
+}
+
 type User struct {
 	ID             uuid.UUID
 	HashedPassword string
