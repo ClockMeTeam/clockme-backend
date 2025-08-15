@@ -28,7 +28,6 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
-	defer conn.Close()
 
 	ctx, cancel := context.WithTimeout(ctxBg, 10*time.Second)
 	defer cancel()
@@ -40,9 +39,7 @@ func main() {
 
 	queries := db.New(conn)
 
-	userIDs := seedUsers(queries, ctxBg)
-	projectIDs := seedProjects(queries, ctxBg)
-	seedProjectsUsers(queries, ctxBg, userIDs, projectIDs)
+	return conn, queries
 }
 func seedUsers(queries *db.Queries, ctxBg context.Context) []uuid.UUID {
 	var userIDs []uuid.UUID
